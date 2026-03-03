@@ -25,5 +25,11 @@ module.exports = {
         rejectUnauthorized: false,
       },
     },
+    pool: {
+      max: 5,        // máximo 5 conexiones
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
   },
 };
