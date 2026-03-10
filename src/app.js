@@ -10,7 +10,11 @@ require('./models')
 const app = express();
 
 app.use(cors({
-    origin: true,
+    origin: [
+        "https://medalerta.com",      // Quitamos la "/" del final
+        "https://www.medalerta.com",  // Agregamos la versión con www por si acaso
+        "http://localhost:5173"
+    ],
     credentials: true // Permite el envío de cookies HTTP-only
 }));
 
@@ -19,7 +23,10 @@ app.use(cors({
 app.use(cookieParser());
 
 app.use(express.json());
-app.use(helmet());
+// app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 
 // rutas
