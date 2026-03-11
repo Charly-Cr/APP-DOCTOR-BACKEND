@@ -7,6 +7,12 @@ const getAllUser = async () => {
   });
 };
 
+// const getAllUserA = async () => {
+//   return await user.findAll({
+//     attributes: { exclude: ["password"] }
+//   });
+// };
+
 
 // Devuelve todos los usuarios sin la contraseña
 const createUser = async ({
