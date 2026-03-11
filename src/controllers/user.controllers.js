@@ -7,6 +7,11 @@ const getAll = catchError(async (req, res) => {
   return res.json(results);
 });
 
+// const getAll = catchError(async (req, res) => {
+//   const results = await getAllUser();
+//   return res.json(results);
+// });
+
 
 const create = catchError(async (req, res) => {
   const {firstName, lastName, email, phone, role } = req.body;
