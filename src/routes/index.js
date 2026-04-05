@@ -8,8 +8,9 @@ const doctorHistoryRouter = require('./doctorHistory.router');
 const alertRouter = require('./alert.router');
 const doctorNoteRouter = require('./doctorNote.router');
 const patientNoteRouter = require('./patientNote.router');
-const subscriptionRouter = require('./subscription.routes');
+const subscriptionRouter = require('./subscription.router');
 const paymentRouter = require('./payment.router');
+const doctorDashboardRouter = require('./doctorDashboard.router');
 const router = express.Router();
 
 // colocar las rutas aquí
@@ -24,6 +25,7 @@ router.use('/', doctorNoteRouter)
 router.use('/', patientNoteRouter);
 router.use('/subscriptions', subscriptionRouter)
 router.use('/payments', paymentRouter)
+router.use('/doctor', doctorDashboardRouter);
 
 
 

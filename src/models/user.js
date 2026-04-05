@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       user.hasOne(models.doctor, { foreignKey: 'userId' });
+      user.hasOne(models.patient, { foreignKey: 'userId' });
     }
   }
   user.init({
@@ -48,6 +49,20 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: "patient"
     },
+    acceptedTerms: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    acceptedTermsAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    mustChangePassword: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+    }
   }, {
     sequelize,
     modelName: 'user',

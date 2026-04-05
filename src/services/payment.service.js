@@ -1,9 +1,8 @@
-const { payment } = require('../models');
 const crypto = require('crypto');
 const { activate } = require('./subscription.service');
 const { uploadToCloudinary } = require('../utils/cloudinary');
-const sendEmail = require('../utils/sendEmail');
-const { doctor, user } = require('../models');
+const { doctor, user, payment } = require('../models');
+const { notifyAdminNewPayment } = require('./notification.service');
 
 /**
  * FLUJO DE PAGO:
@@ -66,20 +65,24 @@ const uploadVoucherService = async (paymentId, file) => {
     const claim = await payment.findByPk(paymentId);
     if (!claim) throw new Error("Orden de pago no encontrada");
 
-    // 1. Subimos la imagen a una carpeta específica en Cloudinary
+    // 1. Buscamos al Administrador para tener su correo
+    const adminProfile = await user.findOne({ where: { role: 'superadmin' } });
+    if (!adminProfile) throw new Error("No hay administrador configurado en la DB");
+    
+    // 2. Subimos la imagen a una carpeta específica en Cloudinary
     const uploadResult = await uploadToCloudinary(file, {
         folder: 'vouchers_pagos',
         public_id: `voucher_${claim.claimCode}`
     });
 
-    // 2. Actualizamos la orden en la DB con la URL y un estado de "En revisión"
+    // 3. Actualizamos la orden en la DB con la URL y un estado de "En revisión"
     await claim.update({
         voucherImage: uploadResult.secure_url,
         status: 'pending' // O puedes crear un estado 'on_review' si prefieres
     });
 
     
-        // 3. Buscamos el pago YA actualizado pero TRAEMOS los nombres del doctor y usuario
+        // 4. Buscamos el pago YA actualizado pero TRAEMOS los nombres del doctor y usuario
         const updatedPayment = await payment.findByPk(paymentId, {
         include: [
         {
@@ -89,44 +92,24 @@ const uploadVoucherService = async (paymentId, file) => {
     ]
 });
 
-    // 3. Notificación: Usamos process.env.EMAIL para recibirlo tú mismo
-    await sendEmail({
-    to: process.env.EMAIL, // Tu correo de administrador [cite: 2026-01-03]
-    subject: `💎 PREMÍUM: Nuevo Ingreso de ${updatedPayment.doctor?.user?.firstName || 'Doctor'} - ${updatedPayment.claimCode}`,
-    html: `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa; padding: 40px; color: #1a1a1a;">
-            <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid #000000;">
-                
-                <div style="padding: 30px; text-align: center; background: #1a1a1a; color: #ffffff;">
-                    <h1 style="margin: 0; font-size: 24px; letter-spacing: 2px;">NOTIFICACIÓN DE ELITE</h1>
-                    <p style="opacity: 0.8; margin-top: 5px;">Sistema de Pagos DoctorApp</p>
-                </div>
-
-                <div style="padding: 40px;">
-                    <h2 style="color: #1a1a1a; margin-bottom: 25px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">Detalles del Depósito</h2>
-                    
-                    <p style="font-size: 16px;">👤 <strong>Doctor:</strong> <span style="color: #4f46e5;">${updatedPayment.doctor?.user?.firstName} ${updatedPayment.doctor?.user?.lastName}</span></p>
-                    <p style="font-size: 16px;">💰 <strong>Monto Recibido:</strong> <span style="color: #22c55e; font-weight: bold;">S/ ${updatedPayment.amount}</span></p>
-                    <p style="font-size: 16px;">📅 <strong>Plan Solicitado:</strong> <span style="text-transform: uppercase; font-weight: bold;">${updatedPayment.planType}</span></p>
-                    <p style="font-size: 16px;">🔑 <strong>Código de Operación:</strong> ${updatedPayment.claimCode}</p>
-                    
-                    <div style="margin-top: 40px; text-align: center;">
-                        <a href="${updatedPayment.voucherImage}" 
-                           style="background-color: #ffffff; color: #1a1a1a; border: 2px solid #1a1a1a; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px; display: inline-block;">
-                           🔍 REVISAR VOUCHER
-                        </a>
-                    </div>
-                </div>
-
-                <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
-                    <p style="font-size: 13px; color: #6b7280; margin: 0;">Inversión en proceso de verificación. Gestión de activos v1.0</p>
-                </div>
-            </div>
-        </div>
-    `
-}).catch(err => console.error("Error en notificación admin:", err));
+    // 5. ENVÍO SEGURO: Solo si existe el adminProfile
+    if (adminProfile && adminProfile.email) {
+        // Usamos await para asegurar que el proceso de envío se complete
+        await notifyAdminNewPayment(
+            adminProfile.email, 
+            // doctorFullName esta desestructurado aqui en la siguiente linea
+            `${updatedPayment.doctor.user.firstName} ${updatedPayment.doctor.user.lastName}`,
+            updatedPayment.amount,
+            updatedPayment.planType,
+            updatedPayment.claimCode,
+            updatedPayment.voucherImage
+        );
+    } else {
+        console.error("⚠️ No se envió correo: Admin no encontrado o sin email.");
+    }
 
     return updatedPayment;
 };
+
 
 module.exports = { createClaim, approveClaim, uploadVoucherService };

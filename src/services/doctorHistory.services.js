@@ -1,5 +1,6 @@
 const {
   patient,
+  user,
   daily_record,
   daily_record_answer,
   follow_up_question,
@@ -9,8 +10,10 @@ const {
 } = require('../models');
 
 const getPatientHistory = async (doctorUserId, patientId) => {
+  // 1. Buscamos el perfil del doctor (usando el ID del usuario del JWT)
   const doctorProfile = await doctor.findOne({
-    where: { userId: doctorUserId }
+    where: { userId: doctorUserId },
+    attributes: ['id'] // Solo traemos el ID para ahorrar memoria
   });
 
   if (!doctorProfile) return null;
@@ -20,11 +23,13 @@ const getPatientHistory = async (doctorUserId, patientId) => {
     where: {
       id: patientId,
       doctorId: doctorProfile.id
-    }
+    },
+    attributes: ['id']
   });
 
   if (!patientProfile) return 'FORBIDDEN';
 
+  // 3. RETORNO DE DATA ORDENADA PARA GRÁFICOS
   return await daily_record.findAll({
     where: { patientId },
     order: [['recordDate', 'DESC']],
@@ -41,6 +46,20 @@ const getPatientHistory = async (doctorUserId, patientId) => {
   });
 };
 
+
+const getPatientFullData = async (patientId) => {
+  return await patient.findByPk(patientId, {
+    include: [
+      { model: user },
+      {
+        model: doctor,
+        include: [{ model: user }]
+      }
+    ]
+  });
+};
+
 module.exports = {
-  getPatientHistory
+  getPatientHistory,
+  getPatientFullData
 };

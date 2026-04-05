@@ -1,17 +1,12 @@
 const { user, doctor, patient, payment } = require('../models');
 const { deleteFromCloudinary } = require('../utils/cloudinary');
+const bcrypt = require("bcrypt");
 
 const getAllUser = async () => {
   return await user.findAll({
     attributes: { exclude: ["password"] }
   });
 };
-
-// const getAllUserA = async () => {
-//   return await user.findAll({
-//     attributes: { exclude: ["password"] }
-//   });
-// };
 
 
 // Devuelve todos los usuarios sin la contraseña
@@ -21,7 +16,8 @@ const createUser = async ({
   email,
   phone,
   passwordHash,
-  role
+  role,
+  acceptedTerms
 }) => {
   
   const newUser = await user.create({
@@ -30,13 +26,22 @@ const createUser = async ({
     email,
     phone,
     password: passwordHash,
-    role
+    role,
+    acceptedTerms, 
+    acceptedTermsAt: acceptedTerms ? new Date() : null
   });
 
   const userJson = newUser.toJSON();
   delete userJson.password;
   return userJson;
 };
+
+const getUserByIdSafe = async (id) => {
+  return await user.findByPk(id, {
+    attributes: { exclude: ["password"] }
+  });
+};
+
 
 const getOneUser = async (id) => {
   return await user.findByPk(id, {
@@ -47,6 +52,7 @@ const getOneUser = async (id) => {
         include: [{ 
           model: payment, 
           as: 'payments',
+          separate: true,  // jecute una segunda query solo para payments
           limit: 1, 
           order: [['createdAt', 'DESC']] // Traemos el pago más reciente
         }]
@@ -87,12 +93,36 @@ const loginEmailUser = async (email) => {
   return await user.findOne({ where: { email } })
 }
 
+
+const changePassword = async (userId, currentPassword, newPassword) => {
+
+  const foundUser = await user.findByPk(userId);
+  if (!foundUser) return null;
+
+  // validar contraseña actual
+  const isValid = await bcrypt.compare(currentPassword, foundUser.password);
+  if (!isValid) return "INVALID_PASSWORD";
+
+  // hashear nueva contraseña
+  const newHash = await bcrypt.hash(newPassword, 10);
+
+  // actualizar
+  await foundUser.update({
+    password: newHash,
+    mustChangePassword: false
+  });
+
+  return true;
+};
+
 module.exports = {
   getAllUser,
   createUser,
+  getUserByIdSafe,
   getOneUser,
   putUser,
   removeUser,
-  loginEmailUser
+  loginEmailUser,
+  changePassword
 }
 

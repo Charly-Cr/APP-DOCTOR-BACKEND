@@ -2,8 +2,10 @@ const {
   alert,
   alert_detail,
   follow_up_question,
-  doctor
+  doctor, user
 } = require('../models');
+
+const { notifyHighAlert } = require('./notification.service');
 
 const buildSummary = (details) => {
   const pain = details.find(d => 
@@ -61,6 +63,31 @@ const createMedicalAlertIfNeeded = async ({ patient, dailyRecord, answers }) => 
   await alert_detail.bulkCreate(
     details.map(d => ({ ...d, alertId: newAlert.id }))
   );
+
+
+  // >>> AQUÍ VA LA LÓGICA DEL PUNTO 1 <<<
+  if (severity === 'high') {
+    // Usamos 'patient' (que es el nombre que recibe tu función)
+    const fullDoctorData = await doctor.findByPk(patient.doctorId, {
+      include: [{ model: user }]
+    });
+
+    // Buscamos los datos del usuario del paciente para su nombre
+    const fullPatientData = await user.findByPk(patient.userId);
+
+    if (fullDoctorData?.user?.email) {
+
+      // ENVIAMOS EL CORREO AL DOCTOR
+      notifyHighAlert(
+        fullDoctorData.user.email,
+        fullDoctorData.user.firstName,
+        `${fullPatientData.firstName} ${fullPatientData.lastName}`,
+        newAlert.summary
+      );
+    }
+  }
+
+
 };
 
 const markAsSeen = async (id, doctorId) => {

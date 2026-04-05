@@ -1,10 +1,27 @@
 const catchError = require('../utils/catchError');
-const {createPatient, getMyPatients, assignTemplate} = require('../services/patient.services');
+const {createPatient, getMyPatients, assignTemplate, getMyPatientProfile} = require('../services/patient.services');
 
 const create = catchError(async (req, res) => {
+  const { firstName, lastName, email, phone, acceptedTerms, mustChangePassword } = req.body;
   const doctorUserId = req.user.id;
-  const result = await createPatient(doctorUserId, req.body);
-  if (!result) return res.status(404).json({ message: 'Doctor not found' });
+
+  // Validación rápida: Si no aceptó términos, no se crea nada
+  if (!acceptedTerms) {
+    return res.status(400).json({ 
+      message: "Debes aceptar los términos y condiciones para registrar al paciente." 
+    });
+  }
+
+  const result = await createPatient(doctorUserId, {
+    firstName,
+    lastName,
+    email,
+    phone,
+    passwordHash: req.passwordHash, // Viene de tu middleware
+    acceptedTerms,
+    mustChangePassword
+  });
+
   return res.status(201).json(result);
 });
 
@@ -32,8 +49,23 @@ const assignTemplateToPatient = catchError(async (req, res) => {
 });
 
 
+
+const getMe = catchError(async (req, res) => {
+  const userId = req.user.id;
+
+  const result = await getMyPatientProfile(userId);
+
+  if (!result) {
+    return res.status(404).json({ message: "Paciente no encontrado" });
+  }
+
+  return res.json(result);
+});
+
+
 module.exports = {
   create,
   getMine,
-  assignTemplateToPatient
+  assignTemplateToPatient,
+  getMe
 };

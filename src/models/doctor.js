@@ -35,29 +35,36 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false
     },
     subscriptionStatus: {
-      type: DataTypes.ENUM('active', 'inactive'),
+      type: DataTypes.ENUM('inactive', 'active', 'past_due', 'cancelled'),
       defaultValue: 'inactive'
+    },
+    subscriptionEndsAt: {
+    type: DataTypes.DATE,
+    allowNull: true
     },
     licenseNumber: {
     type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: "PENDING_LICENSE",
     unique: true
     },
     degreeImage: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "no-image.jpg" // O una URL por defecto
     },
     acceptedTerms: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: false
+      defaultValue: false,
     },
     acceptedTermsAt: {
       type: DataTypes.DATE,
       allowNull: true  // Este sí debe ser true porque solo se llena cuando aceptan
     },
+    contractVersion: { // 👈 Para saber qué versión del contrato firmó
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "v1.0-2026"
+    }
   }, {
     sequelize,
     modelName: 'doctor',

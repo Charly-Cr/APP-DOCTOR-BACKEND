@@ -9,10 +9,12 @@ require('./models')
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(cors({
     origin: [
-        "https://medalerta.com",      // Quitamos la "/" del final
-        "https://www.medalerta.com",  // Agregamos la versión con www por si acaso
+        "https://medalerta.com",      // dominio
+        "https://www.medalerta.com",  // dominio con www
         "http://localhost:5173"
     ],
     credentials: true // Permite el envío de cookies HTTP-only

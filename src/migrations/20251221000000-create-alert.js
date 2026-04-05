@@ -64,8 +64,14 @@ module.exports = {
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") 
       }
     });
+
+    await queryInterface.addIndex('alerts', ['status'], { name: 'alerts_status_idx' });
+    await queryInterface.addIndex('alerts', ['dailyRecordId'], { name: 'alerts_daily_record_id_idx' });
+
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('alerts');
+    await queryInterface.removeIndex('alerts', 'alerts_status_idx');
+    await queryInterface.removeIndex('alerts', 'alerts_daily_record_id_idx');
   }
 };

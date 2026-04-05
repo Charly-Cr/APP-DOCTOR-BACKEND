@@ -28,6 +28,14 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
+      assignedTemplateId: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+      model: 'follow_up_templates', 
+        key: 'id'
+  }
+},
       status: {
         type: Sequelize.ENUM('active', 'blocked'),
         defaultValue: 'active'
@@ -43,8 +51,14 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
+
+    await queryInterface.addIndex('patients', ['doctorId'], { name: 'patients_doctor_id_idx' });
+    await queryInterface.addIndex('patients', ['status'], { name: 'patients_status_idx' });
+
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('patients');
+    await queryInterface.removeIndex('patients', 'patients_doctor_id_idx');
+    await queryInterface.removeIndex('patients', 'patients_status_idx');
   }
 };

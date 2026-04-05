@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       daily_record.belongsTo(models.patient, { foreignKey: 'patientId' });
       daily_record.belongsTo(models.follow_up_template, { foreignKey: 'templateId' });
-      daily_record.hasMany(models.daily_record_answer, {foreignKey: 'dailyRecordId'});
+      daily_record.hasMany(models.daily_record_answer, {foreignKey: 'dailyRecordId' });
       daily_record.hasOne(models.alert, { foreignKey: 'dailyRecordId' });
     }
   }

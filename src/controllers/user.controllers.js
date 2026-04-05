@@ -1,6 +1,6 @@
 const catchError = require('../utils/catchError');
-const { getAllUser, createUser, getOneUser, putUser, removeUser } = require('../services/user.services');
-const jwt = require('jsonwebtoken')
+const { getAllUser, createUser, getOneUser, putUser, removeUser, changePassword, getUserByIdSafe } = require('../services/user.services');
+const jwt = require('jsonwebtoken');
 
 const getAll = catchError(async (req, res) => {
   const results = await getAllUser();
@@ -9,7 +9,8 @@ const getAll = catchError(async (req, res) => {
 
 
 const create = catchError(async (req, res) => {
-  const {firstName, lastName, email, phone, role } = req.body;
+
+  const {firstName, lastName, email, phone, role, acceptedTerms } = req.body;
 
   // 🛡️ Filtro de seguridad:
   // Si el rol enviado no es 'patient' ni 'doctor', lo forzamos a ser 'patient'
@@ -23,7 +24,8 @@ const create = catchError(async (req, res) => {
     email,
     phone,
     passwordHash: req.passwordHash,
-    role: finalRole 
+    role: finalRole,
+    acceptedTerms
   });
 
   return res.status(201).json(result);
@@ -95,8 +97,10 @@ const login = catchError(async (req, res) => {
 
   // Eliminar el campo password del objeto antes de devolverlo
   const { password, ...userWithoutPassword } = user.toJSON();
+  
 
   return res.json({ user: userWithoutPassword, message: "Login exitoso" }); 
+  
 });
 
 
@@ -104,13 +108,40 @@ const logged = catchError(async (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ message: "No autorizado" });
   const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
-  return res.json({ user: decoded });
+
+  // 🔥 ahora limpio y correcto
+  const foundUser = await getUserByIdSafe(decoded.id);
+
+  if (!foundUser) {
+    return res.status(404).json({ message: "Usuario no encontrado" });
+  }
+
+  return res.json({ user: foundUser });
 });
+
 
 
 const logout = catchError(async (req, res) => {
   res.clearCookie("token");
   return res.json({ message: "Sesión cerrada correctamente" });
+});
+
+
+const changeMyPassword = catchError(async (req, res) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  const result = await changePassword(userId, currentPassword, newPassword);
+
+  if (result === null) {
+    return res.status(404).json({ message: "Usuario no encontrado" });
+  }
+
+  if (result === "INVALID_PASSWORD") {
+    return res.status(401).json({ message: "Contraseña actual incorrecta" });
+  }
+
+  return res.json({ message: "Contraseña actualizada correctamente" });
 });
 
 module.exports = {
@@ -121,5 +152,6 @@ module.exports = {
   update,
   login, 
   logged,
-  logout
+  logout,
+  changeMyPassword
 }

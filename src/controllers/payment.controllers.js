@@ -57,6 +57,10 @@ const uploadVoucher = catchError(async (req, res) => {
     }
 
     const result = await uploadVoucherService(id, file);
+    
+    if (!result) {
+        return res.status(404).json({ message: "No se pudo procesar el comprobante" });
+    }
 
     return res.json({
         message: "Comprobante recibido. Tu pago está siendo verificado.",

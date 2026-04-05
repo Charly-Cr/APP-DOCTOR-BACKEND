@@ -42,8 +42,14 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
+
+    await queryInterface.addIndex('daily_record_answers', ['dailyRecordId'], {
+      name: 'daily_record_answers_dailyRecord_id_idx'
+    });
+
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('daily_record_answers');
+    await queryInterface.removeIndex('daily_record_answers', 'daily_record_answers_dailyRecord_id_idx');
   }
 };

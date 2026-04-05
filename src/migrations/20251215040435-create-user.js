@@ -36,6 +36,20 @@ module.exports = {
         allowNull: false,
         defaultValue: "patient"
       },
+      acceptedTerms: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+      },
+      acceptedTermsAt: {
+      type: Sequelize.DATE,
+      allowNull: true
+      },
+      mustChangePassword: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -47,8 +61,15 @@ module.exports = {
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") //marca de tiempo actual
       }
     });
+
+    await queryInterface.addIndex('users', ['email'], { name: 'users_email_idx' });
+    await queryInterface.addIndex('users', ['role'], { name: 'users_role_idx' });
+
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('users');
+    await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_users_role";');
+    await queryInterface.removeIndex('users', 'users_email_idx');
+    await queryInterface.removeIndex('users', 'users_role_idx');
   }
 };

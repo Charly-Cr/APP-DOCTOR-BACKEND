@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       patient.belongsTo(models.user, { foreignKey: 'userId' });
       patient.belongsTo(models.doctor, { foreignKey: 'doctorId' });
       patient.belongsTo(models.follow_up_template, { foreignKey: 'assignedTemplateId', as: 'assignedTemplate' });
+      patient.hasMany(models.daily_record, { foreignKey: 'patientId' });
     }
   }
   patient.init({
@@ -37,9 +38,8 @@ module.exports = (sequelize, DataTypes) => {
       assignedTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'assignedTemplateId', // <--- ESTO ES VITAL: Fuerza el nombre exacto de la columna en la DB
       references: {
-      model: 'follow_up_templates', // Asegúrate que el nombre de la tabla sea plural si usaste migraciones
+      model: 'follow_up_template', // Asegúrate que el nombre de la tabla sea plural si usaste migraciones
         key: 'id'
   }
 },

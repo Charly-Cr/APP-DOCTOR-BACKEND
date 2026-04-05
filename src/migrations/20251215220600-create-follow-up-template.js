@@ -2,34 +2,29 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('doctors', {
+    await queryInterface.createTable('follow_up_templates', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
+      doctorId: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        unique: true,
         references: {
-          model: 'users',
+          model: 'doctors',
           key: 'id'
         },
         onDelete: 'CASCADE'
       },
-      specialty: {
+      title: {
         type: Sequelize.STRING,
         allowNull: false
       },
-      verified: {
+      active: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      subscriptionStatus: {
-        type: Sequelize.ENUM('active', 'inactive'),
-        defaultValue: 'inactive'
+        defaultValue: true
       },
       createdAt: {
         allowNull: false,
@@ -42,8 +37,12 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
+
+    await queryInterface.addIndex('follow_up_templates', ['doctorId'], { name: 'follow_up_templates_doctor_id_idx'});
+    
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('doctors');
+    await queryInterface.dropTable('follow_up_templates');
+    await queryInterface.removeIndex('follow_up_templates', 'follow_up_templates_doctor_id_idx');
   }
 };
