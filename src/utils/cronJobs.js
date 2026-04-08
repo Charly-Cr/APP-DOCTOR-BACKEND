@@ -11,12 +11,9 @@ const initCronJobs = () => {
         console.log('🤖 Ejecutando recordatorio diario de reportes...');
 
         try {
-            // Obtenemos el inicio y fin del día actual para el filtro
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
-
-            const endOfDay = new Date();
-            endOfDay.setHours(23, 59, 59, 999);
+            // CAMBIO AQUÍ: En lugar de "inicio del día", buscamos las últimas 24 horas
+            const hace24Horas = new Date();
+            hace24Horas.setHours(hace24Horas.getHours() - 24);
 
             // 1. Buscamos pacientes e intentamos incluir el registro de HOY
             const patientsToRemind = await patient.findAll({
@@ -30,7 +27,7 @@ const initCronJobs = () => {
                         required: false, // Left Join: queremos al paciente aunque no tenga record
                         where: {
                             createdAt: {
-                                [Op.between]: [startOfDay, endOfDay] // 👈 AQUÍ usamos Op correctamente
+                                [Op.gt]: hace24Horas // 👈 Filtra records mayores a "hace 24 horas"
                             }
                         }
                     },
