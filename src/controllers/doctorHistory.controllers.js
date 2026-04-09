@@ -1,5 +1,5 @@
 const catchError = require('../utils/catchError');
-const { getPatientHistory, getPatientFullData } = require('../services/doctorHistory.services');
+const { getPatientHistory, getPatientFullData, getMyOwnHistory } = require('../services/doctorHistory.services');
 const { generatePatientHistoryPDF } = require('../services/pdf.service');
 
 const getHistory = catchError(async (req, res) => {
@@ -14,6 +14,19 @@ const getHistory = catchError(async (req, res) => {
 
   if (!result) {
     return res.status(404).json({ message: 'Doctor not found' });
+  }
+
+  res.json(result);
+});
+
+
+const getMyHistory = catchError(async (req, res) => {
+  const userId = req.user.id; // ID del paciente desde el JWT
+
+  const result = await getMyOwnHistory(userId);
+
+  if (!result) {
+    return res.status(404).json({ message: 'Perfil de paciente no encontrado' });
   }
 
   res.json(result);
@@ -54,5 +67,6 @@ const getHistoryPDF = catchError(async (req, res) => {
 
 module.exports = {
   getHistory,
-  getHistoryPDF
+  getHistoryPDF,
+  getMyHistory
 };

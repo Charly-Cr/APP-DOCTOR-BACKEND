@@ -1,5 +1,5 @@
 const express = require('express');
-const { getHistory, getHistoryPDF } = require('../controllers/doctorHistory.controllers');
+const { getHistory, getHistoryPDF, getMyHistory } = require('../controllers/doctorHistory.controllers');
 const { verifyJWT } = require('../utils/verifyJWT');
 const verifyRoles = require('../utils/verifyRoles');
 
@@ -11,6 +11,9 @@ doctorHistoryRouter.route('/patients/:patientId/history')
 
 doctorHistoryRouter.route('/patients/:patientId/history/pdf')
   .get(verifyJWT, verifyRoles('doctor'), getHistoryPDF );
+
+doctorHistoryRouter.route('/my-history')
+  .get(verifyJWT, verifyRoles('patient'), getMyHistory);
   
 
 

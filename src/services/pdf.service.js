@@ -3,8 +3,11 @@ const puppeteer = require("puppeteer");
 const generatePatientHistoryPDF = async (patientData, history) => {
   let browser;
   try {
+    const isProd = process.env.NODE_ENV === "production";
+
     browser = await puppeteer.launch({
       headless: "new",
+      executablePath: isProd ? "/usr/bin/google-chrome" : undefined,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
@@ -17,7 +20,7 @@ const generatePatientHistoryPDF = async (patientData, history) => {
         <meta charset="UTF-8">
         <style>
           @page { margin: 20mm; }
-          body { font-family: 'Helvetica', 'Arial', sans-serif; color: #334155; line-height: 1.5; margin: 0; }
+          body { font-family: 'Liberation Sans', 'DejaVu Sans', Arial, sans-serif; color: #334155; line-height: 1.5; margin: 0; }
           .header-table { width: 100%; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
           .hospital-name { font-size: 24px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: -1px; }
           .report-title { text-align: right; color: #64748b; font-size: 12px; font-weight: bold; text-transform: uppercase; }
@@ -101,6 +104,8 @@ const generatePatientHistoryPDF = async (patientData, history) => {
     `;
 
     await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.evaluateHandle('document.fonts.ready');
+
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,

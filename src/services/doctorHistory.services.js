@@ -59,7 +59,36 @@ const getPatientFullData = async (patientId) => {
   });
 };
 
+
+/** 🔥 NUEVO SERVICIO PARA LA HISTORIA DEL PACIENTE **/
+const getMyOwnHistory = async (userId) => {
+  // 1. Buscamos el perfil del paciente asociado al usuario del JWT
+  const patientProfile = await patient.findOne({
+    where: { userId },
+    attributes: ['id']
+  });
+
+  if (!patientProfile) return null;
+
+  // 2. Traemos su historial (reutilizando tu lógica de includes)
+  return await daily_record.findAll({
+    where: { patientId: patientProfile.id },
+    order: [['recordDate', 'DESC']],
+    include: [
+      {
+        model: daily_record_answer,
+        include: [follow_up_question]
+      },
+      {
+        model: alert,
+        include: [{ model: doctor_note }]
+      }
+    ]
+  });
+};
+
 module.exports = {
   getPatientHistory,
-  getPatientFullData
+  getPatientFullData,
+  getMyOwnHistory
 };
