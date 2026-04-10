@@ -1,6 +1,7 @@
 const catchError = require('../utils/catchError');
 const { getPatientHistory, getPatientFullData, getMyOwnHistory } = require('../services/doctorHistory.services');
 const { generatePatientHistoryPDF } = require('../services/pdf.service');
+const { addToQueue } = require('../utils/pdfQueue');
 
 const getHistory = catchError(async (req, res) => {
   const doctorUserId = req.user.id;
@@ -52,8 +53,11 @@ const getHistoryPDF = catchError(async (req, res) => {
   // ✅ USAS EL SERVICE (no modelos directos)
   const patientData = await getPatientFullData(patientId);
 
-  // 🧾 PDF
-  const pdf = await generatePatientHistoryPDF(patientData, history);
+  
+  // 🔥 AQUÍ entra la cola del PDF
+  const pdf = await addToQueue(() =>
+    generatePatientHistoryPDF(patientData, history)
+  );
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename=historia.pdf');
