@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       follow_up_template.belongsTo(models.doctor, { foreignKey: 'doctorId' });
       follow_up_template.hasMany(models.follow_up_question, {foreignKey: 'templateId', as: 'questions'}); // <--- Si usas un alias, es más fácil de manejar
+      // follow_up_template.hasMany(models.daily_record, { foreignKey: 'templateId', as: 'records' });
     }
   }
   follow_up_template.init({

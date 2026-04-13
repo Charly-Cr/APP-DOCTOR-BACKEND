@@ -47,6 +47,18 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM('active', 'blocked'),
         defaultValue: 'active'
       },
+      birthDate: {
+        type: DataTypes.DATEONLY,
+      allowNull: true,
+      },
+      gender: {
+        type: DataTypes.ENUM('Masculino', 'Femenino', 'Otro'),
+      allowNull: true,
+      },
+      address: {
+        type: DataTypes.STRING,
+      allowNull: true,
+      },
   }, {
     sequelize,
     modelName: 'patient',

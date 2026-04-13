@@ -2,7 +2,7 @@ const catchError = require('../utils/catchError');
 const {createPatient, getMyPatients, assignTemplate, getMyPatientProfile} = require('../services/patient.services');
 
 const create = catchError(async (req, res) => {
-  const { firstName, lastName, email, phone, acceptedTerms, mustChangePassword } = req.body;
+  const { firstName, lastName, email, phone, acceptedTerms, mustChangePassword, birthDate, gender, address } = req.body;
   const doctorUserId = req.user.id;
 
   // Validación rápida: Si no aceptó términos, no se crea nada
@@ -19,7 +19,10 @@ const create = catchError(async (req, res) => {
     phone,
     passwordHash: req.passwordHash, // Viene de tu middleware
     acceptedTerms,
-    mustChangePassword
+    mustChangePassword,
+    birthDate, 
+    gender, 
+    address
   });
 
   return res.status(201).json(result);
