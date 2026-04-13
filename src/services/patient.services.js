@@ -8,7 +8,7 @@ const createPatient = async (doctorUserId, {
   phone,
   passwordHash,
   acceptedTerms,
-  mustChangePassword
+  mustChangePassword, birthDate, gender, address
 }) => {
   // Buscamos al doctor
   const doctorProfile = await doctor.findOne({ where: { userId: doctorUserId } });
@@ -24,14 +24,17 @@ const createPatient = async (doctorUserId, {
     role: 'patient',
     acceptedTerms, 
     acceptedTermsAt: acceptedTerms ? new Date() : null,
-    mustChangePassword: true
+    mustChangePassword: mustChangePassword ?? true
   });
 
   // Creamos el registro de paciente vinculado
   const newPatient = await patient.create({
     userId: newUser.id,
     doctorId: doctorProfile.id,
-    status: 'active'
+    status: 'active',
+    birthDate,
+    gender,
+    address
   });
 
   // Limpiamos la respuesta igual que en tu ejemplo

@@ -1,4 +1,4 @@
-const { doctor_note, alert, patient, user, doctor } = require('../models');
+const { doctor_note, alert, patient, user, doctor, daily_record } = require('../models');
 const { notifyDoctorNote } = require('./notification.service');
 
 
@@ -30,12 +30,27 @@ const createDoctorNote = async (doctorId, alertId, body) => {
     followUp: body.followUp
   });
 
-  
-  // 3. Marcar alerta como manejada (Tu lógica original)
-  await alertFound.update({
-    status: 'handled',
-    read: true
-  });
+  // 3. 🚀 EL FIX: Actualizar el historial con formato de PDF
+  if (alertFound.dailyRecordId) {
+    await daily_record.update({
+      // Mapeamos al lenguaje que entiende tu PDF
+      reason_for_consultation: `SEGUIMIENTO DE ALERTA: ${body.observation}`,
+      
+      // IMPORTANTE: Ponlo entre corchetes [] porque es un array
+      diagnosis: [body.clinicalAssessment], 
+      
+      // Formateamos el tratamiento para que el PDF no vea un objeto vacío
+      treatment: {
+        indicaciones_alerta: body.actionPlan,
+        seguimiento_sugerido: body.followUp,
+        fecha_nota: new Date().toLocaleDateString()
+      }
+    }, { 
+      where: { id: alertFound.dailyRecordId } 
+    });
+    
+    console.log(`✅ Historial #${alertFound.dailyRecordId} actualizado con éxito`);
+  }
 
 
   // 4. DISPARAR NOTIFICACIÓN 
