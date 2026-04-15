@@ -47,6 +47,23 @@ const getPatientHistory = async (doctorUserId, patientId) => {
 };
 
 
+// Nuevo servicio para traer solo UN registro específico
+const getSingleRecord = async (recordId) => {
+  return await daily_record.findByPk(recordId, {
+    include: [
+      {
+        model: daily_record_answer,
+        include: [follow_up_question]
+      },
+      {
+        model: alert,
+        include: [{ model: doctor_note }]
+      }
+    ]
+  });
+};
+
+
 const getPatientFullData = async (patientId) => {
   return await patient.findByPk(patientId, {
     include: [
@@ -89,6 +106,7 @@ const getMyOwnHistory = async (userId) => {
 
 module.exports = {
   getPatientHistory,
+  getSingleRecord,
   getPatientFullData,
   getMyOwnHistory
 };

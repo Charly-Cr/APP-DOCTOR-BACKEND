@@ -5,19 +5,34 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const router = require('./routes');
 const errorHandler = require('./utils/errorHandler');
+const rateLimit = require('express-rate-limit');
 require('./models')
 
 const app = express();
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 peticiones por cada IP
+  message: {
+    message: "Demasiadas peticiones desde esta IP, intenta de nuevo en 15 minutos, bro."
+  },
+  standardHeaders: true, // Retorna info del límite en los headers
+  legacyHeaders: false,
+});
+
 app.set("trust proxy", 1);
 
+// Los dominios oficiales SIEMPRE están permitidos
+const whitelist = ["https://medalerta.com", "https://www.medalerta.com"];
+
+// Solo si NO estamos en producción, le abrimos la puerta al localhost
+if (process.env.NODE_ENV !== 'production') {
+    whitelist.push("http://localhost:5173");
+}
+
 app.use(cors({
-    origin: [
-        "https://medalerta.com",      // dominio
-        "https://www.medalerta.com",  // dominio con www
-        "http://localhost:5173"
-    ],
-    credentials: true // Permite el envío de cookies HTTP-only
+    origin: whitelist,
+    credentials: true  //PERMITE EL ENVIO DE COOKIES HTTPONLY
 }));
 
 
@@ -32,7 +47,7 @@ app.use(helmet({
 
 
 // rutas
-app.use("/api/v1",router);
+app.use("/api/v1",limiter, router);
 app.get("/", (req, res) => {
     return res.send("Child Connection API working!")
 })

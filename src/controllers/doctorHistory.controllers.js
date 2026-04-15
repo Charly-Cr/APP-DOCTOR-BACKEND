@@ -1,5 +1,5 @@
 const catchError = require('../utils/catchError');
-const { getPatientHistory, getPatientFullData, getMyOwnHistory } = require('../services/doctorHistory.services');
+const { getPatientHistory, getPatientFullData, getMyOwnHistory, getSingleRecord } = require('../services/doctorHistory.services');
 const { generatePatientHistoryPDF } = require('../services/pdf.service');
 const { addToQueue } = require('../utils/pdfQueue');
 
@@ -68,9 +68,37 @@ const getHistoryPDF = catchError(async (req, res) => {
 });
 
 
+const getSingleRecordPDF = catchError(async (req, res) => {
+  const { recordId } = req.params; // ID de la consulta que clickeaste
+
+  // 1. Buscamos solo ese registro específico
+  const record = await getSingleRecord(recordId);
+
+  if (!record) {
+    return res.status(404).json({ message: 'Registro no encontrado' });
+  }
+
+  // 2. Traemos los datos del paciente usando el patientId que viene en el record
+  const patientData = await getPatientFullData(record.patientId);
+
+  // 3. Importante: generatePatientHistoryPDF espera un Array (history.map)
+  // Así que metemos el único registro dentro de un array [record]
+  const pdf = await addToQueue(() =>
+    generatePatientHistoryPDF(patientData, [record])
+  );
+
+  res.setHeader('Content-Type', 'application/pdf');
+  // Le ponemos la fecha al nombre del archivo para que sea ordenado
+  res.setHeader('Content-Disposition', `attachment; filename=consulta_${recordId}.pdf`);
+  
+  return res.end(pdf);
+});
+
+
 
 module.exports = {
   getHistory,
-  getHistoryPDF,
+  getHistoryPDF,        // TRAER TODO EL PDF 
+  getSingleRecordPDF,   // TRAER PDF INDIVIDUAL
   getMyHistory
 };
