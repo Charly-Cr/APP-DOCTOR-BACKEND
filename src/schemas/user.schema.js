@@ -14,6 +14,11 @@ const createUserSchema = z.object({
     .toLowerCase()
     .trim(),
   phone: z.string()
+    //     / y / : Son los delimitadores que le dicen a JavaScript: "Todo lo que está aquí adentro es una expresión regular".
+    // ^ : Marca el inicio de la cadena.
+    // [0-9] : Es un rango. Significa cualquier carácter entre el 0 y el 9.
+    // + : Este es el cuantificador clave. Significa "uno o más". Es decir, la cadena debe tener al menos un número, pero puede tener todos los que quieras.
+    // $ : Marca el final de la cadena.
     .regex(/^[0-9]+$/, "El teléfono solo debe contener números")
     .min(9, "El teléfono debe tener al menos 9 dígitos")
     .max(11, "El teléfono no debe pasar de 11 dígitos"),
