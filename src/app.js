@@ -23,7 +23,7 @@ const limiter = rateLimit({
 app.set("trust proxy", 1);
 
 // Los dominios oficiales SIEMPRE están permitidos
-const whitelist = ["https://medalerta.com", "https://www.medalerta.com"];
+const whitelist = ["https://medalerta.com", "https://www.medalerta.com", "https://app-doctor-backend-production.up.railway.app"];
 
 // Solo si NO estamos en producción, le abrimos la puerta al localhost
 if (process.env.NODE_ENV !== 'production') {
