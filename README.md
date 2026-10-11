@@ -1,6 +1,66 @@
-# 🏥 APP-DOCTOR – Backend & Frontend Guide
+# MediAlerta API — Real-Time Medical Platform
 
-> 📌 **Este README funciona como contrato técnico entre Founder y Devs**
+Production REST API for doctor-patient monitoring with real-time clinical alerts. Powers **medalerta.com** — handles patient tracking, daily records, and alert lifecycle.
+
+**Live:** https://medalerta.com | **Stack:** Node.js, Express, PostgreSQL, Sequelize, Socket.io
+
+## Key Features
+
+- **Secure Multi-Tenancy:** Doctor data isolation — doctors only access patients they created
+- **Real-Time Alerts:** `alert_details` + seen/handled workflow for critical patient events
+- **Patient Engagement:** Active plan validation for daily records, full clinical history timeline
+- **Security First:** JWT in HttpOnly Cookies, RBAC (doctor, patient, superadmin), least privilege by design
+- **Env Separation:** development / staging / production with mocks for email & payments
+
+## Tech Stack
+
+**Backend:** Node.js, Express.js, Sequelize ORM, Socket.io  
+**Database:** PostgreSQL (transactions, indexes, row-level isolation)  
+**Auth:** JWT + HttpOnly Cookies + RBAC + bcrypt  
+**DevOps:** Railway, GitHub Actions, Env-based config
+
+## Security Design
+
+> Built with security from day one, not as a patch.
+
+- `Doctor` → Can only list/access patients created by him. Only sees alerts from his patients.
+- `Patient` → Can only access own plan, daily records, and doctor notes. No `GET /patients/:id` (security by design)
+- `Superadmin` → Technical tasks only, no clinical data access
+
+## API Overview
+
+Auth: POST /users/login, POST /users/logout, GET /users/me
+Patients: POST /patients, GET /patients
+Plans: POST /plans, POST /patient-plans, GET /patient-plans/me
+Clinical: POST /daily-records (requires active plan)
+Alerts: GET /alerts, PATCH /alerts/:id/seen, PATCH /alerts/:id/handled
+Notes: POST /alerts/:id/notes, GET /my/notes
+History: GET /doctor/patients/:id/history
+
+## Quick Start
+
+```bash
+git clone https://github.com/Charly-Cr/APP-DOCTOR-BACKEND.git
+cd APP-DOCTOR-BACKEND
+npm install
+cp .env.example .env
+npx sequelize-cli db:migrate
+npm run dev
+```
+
+.env.example documents the contract, no real secrets. Email & Payment integrations are mocked in development.
+
+Author
+Charly Cruz — Backend Developer | Node.js | TypeScript | PostgreSQL | AWS
+Lima, Peru — GitHub @Charly-Cr
+
+
+
+
+<!--
+# APP-DOCTOR – Backend & Frontend Guide
+
+>  **Este README funciona como contrato técnico entre Founder y Devs**
 >
 > Los devs implementan y prueban la lógica.
 >
@@ -8,22 +68,20 @@
 
 ---
 
-## 🧠 Visión General
+## Visión General
 
 Este proyecto es una aplicación de **seguimiento médico** con dos roles principales:
 
-* 👨‍⚕️ **Doctor** (core del sistema)
-* 🧑‍🦽 **Patient**
+*  **Doctor** (core del sistema)
+*  **Patient**
 
 El sistema está diseñado para que el doctor gestione pacientes, planes y alertas clínicas, mientras que el paciente registra su estado diario y recibe seguimiento.
 
-<!-- 🔎 Comentario: Esta sección deja claro el dominio del negocio antes de entrar a lo técnico -->
-
 ---
 
-## 🌍 Mundos de la Aplicación
+## Mundos de la Aplicación
 
-### 👨‍⚕️ Doctor (Core del sistema)
+### Doctor (Core del sistema)
 
 El doctor es el centro del flujo clínico.
 
@@ -35,13 +93,11 @@ Puede:
 * Ver alertas clínicas
 * Marcar alertas como vistas o atendidas
 * Crear notas médicas sobre alertas
-* Ver historial clínico completo de un paciente
-
-<!-- 🔎 Comentario: Aquí se define el alcance funcional del rol Doctor -->
+* Ver historial clínico completo de un paciente 
 
 ---
 
-### 🧑‍🦽 Patient
+### Patient
 
 El paciente solo interactúa con su propio tratamiento.
 
@@ -51,42 +107,38 @@ Puede:
 * Completar registros diarios (daily records)
 * Ver notas médicas del doctor
 
-<!-- 🔎 Comentario: Rol limitado por diseño (principio de mínimo privilegio) -->
-
 ---
 
-## 🔐 Autenticación y Autorización
+## Autenticación y Autorización
 
 * Autenticación mediante **JWT**
 * El token se guarda en **cookies**
 * Roles disponibles:
 
-  * `doctor`
-  * `patient`
-  * `superadmin` (uso técnico, no clínico)
+    * `doctor`
+    * `patient`
+    * `superadmin` (uso técnico, no clínico)
 
-### 🔒 Reglas de Acceso (MUY IMPORTANTE)
+### Reglas de Acceso (MUY IMPORTANTE)
 
 * **Doctor**:
 
-  * Solo puede acceder a pacientes creados por él
-  * Solo ve alertas generadas por sus pacientes
+    * Solo puede acceder a pacientes creados por él
+    * Solo ve alertas generadas por sus pacientes
 
 * **Patient**:
 
-  * Solo puede acceder a su propia información
-  * No puede listar ni acceder a otros pacientes
+    * Solo puede acceder a su propia información
+    * No puede listar ni acceder a otros pacientes
 
 * **Superadmin**:
 
-  * Solo para tareas técnicas
-  * No interactúa con datos clínicos reales
-
-<!-- 🔎 Comentario: Esta sección es clave para seguridad y para guiar middleware de autorización -->
+    * Solo para tareas técnicas
+    * No interactúa con datos clínicos reales
 
 ---
 
-## 🌱 Entornos
+## Entornos
 
 El sistema funciona en tres entornos claramente separados:
 
@@ -94,15 +146,13 @@ El sistema funciona en tres entornos claramente separados:
 * **staging** → testing interno, datos fake
 * **production** → datos reales (solo Founder)
 
-⚠️ **Nunca usar datos reales en development o staging**
-
-<!-- 🔎 Comentario: Esto justifica el uso de mocks y variables "solo producción" -->
+Nunca usar datos reales en development o staging
 
 ---
 
-## 📡 Backend – Endpoints
+## Backend – Endpoints
 
-### 👤 USERS
+### USERS
 
 * `POST /users` → crear usuario
 * `POST /users/login` → login
@@ -115,54 +165,52 @@ El sistema funciona en tres entornos claramente separados:
 
 ---
 
-### 👨‍⚕️ DOCTORS
+### DOCTORS
 
 * `POST /doctors` → crear perfil doctor
 * `GET /doctors` → listar doctores
 
 ---
 
-### 🧑‍🦽 PATIENTS
+### PATIENTS
 
 * `POST /patients` → doctor crea paciente
 * `GET /patients` → doctor obtiene sus pacientes
 
-📌 **No existe** `GET /patients/:id`
-📌 El frontend debe trabajar con la data que ya viene del listado
-
-<!-- 🔎 Comentario: Decisión de seguridad por diseño -->
+No existe `GET /patients/:id`
+El frontend debe trabajar con la data que ya viene del listado
 
 ---
 
-### 📦 PLANS
+### PLANS
 
 * `POST /plans` → crear plan
 * `GET /plans` → listar planes
 
 ---
 
-### 🔗 PATIENT-PLANS
+### PATIENT-PLANS
 
 * `POST /patient-plans` → doctor asigna plan a paciente
 * `GET /patient-plans/me` → paciente ve su plan activo
 
 ---
 
-### 🧾 FOLLOW-UP TEMPLATES
+### FOLLOW-UP TEMPLATES
 
 * `POST /follow-up-templates` → crear template
 * `GET /follow-up-templates` → listar templates
 
 ---
 
-### 📊 DAILY RECORDS (Paciente)
+### DAILY RECORDS (Paciente)
 
 * `POST /daily-records` → paciente llena registro diario
-* 🔒 Requiere plan activo
+* Requiere plan activo
 
 ---
 
-### 🚨 ALERTS (Doctor)
+### ALERTS (Doctor)
 
 * `GET /alerts` → doctor obtiene sus alertas
 * `PATCH /alerts/:id/seen` → marcar alerta como vista
@@ -176,26 +224,26 @@ Las alertas incluyen:
 
 ---
 
-### 📝 DOCTOR NOTES
+### DOCTOR NOTES
 
 * `POST /alerts/:id/notes` → doctor crea nota clínica
 
 ---
 
-### 📓 PATIENT NOTES
+### PATIENT NOTES
 
 * `GET /my/notes` → paciente ve notas del doctor
 
 ---
 
-### 📚 PATIENT HISTORY (Doctor)
+### PATIENT HISTORY (Doctor)
 
 * `GET /doctor/patients/:id/history`
 * Devuelve historial clínico completo del paciente
 
 ---
 
-## ⚙️ Variables de Entorno
+## Variables de Entorno
 
 El archivo `.env.example` **documenta el contrato de configuración**, no contiene secrets reales.
 
@@ -205,13 +253,11 @@ El archivo `.env.example` **documenta el contrato de configuración**, no contie
 * `PASSWORD`
 * `PAYMENT_*`
 
-En development y staging estas integraciones se **mockean**.
-
-<!-- 🔎 Comentario: Esto explica por qué los devs no necesitan datos reales -->
+En development y staging estas integraciones se mockean.
 
 ---
 
-## 🧑‍💻 Flujo de Trabajo para Devs
+## Flujo de Trabajo para Devs
 
 1. Clonar el repositorio
 2. Copiar `.env.example` → `.env`
@@ -219,14 +265,12 @@ En development y staging estas integraciones se **mockean**.
 4. Desarrollar en ramas feature
 5. Crear PR hacia `develop`
 
-🚫 Los devs **NO** deployan a producción
-🚫 Los devs **NO** manejan secrets reales
-
-<!-- 🔎 Comentario: Define claramente responsabilidades -->
+Los devs NO deployan a producción
+Los devs NO manejan secrets reales
 
 ---
 
-## 👑 Responsabilidad del Founder
+## Responsabilidad del Founder
 
 * Deploy a producción
 * Manejo de Railway (prod)
@@ -236,8 +280,9 @@ En development y staging estas integraciones se **mockean**.
 
 ---
 
-## ✅ Conclusión
+## Conclusión
 
 Este documento define **qué se puede hacer, quién lo hace y en qué entorno**.
 
 > Construimos con seguridad desde el diseño, no como parche.
+-->
